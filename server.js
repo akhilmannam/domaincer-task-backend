@@ -26,6 +26,9 @@ app.post("/register", async (req, res) => {
 		let hash = await bcrypt.hash(req.body.password, salt);
 		req.body.password = hash;
 		await db.collection("users").insertOne(req.body);
+		await db
+			.collection("applied")
+			.insertOne({ userID: response.ops[0]._id.toString(), applied: [] });
 		res.json({
 			message: "User Registered",
 		});
@@ -160,6 +163,43 @@ app.get("/applications/:id", authenticate, async (req, res) => {
 			.collection("applications")
 			.find({ recruiterID: req.params.id })
 			.toArray();
+		await connection.close();
+		res.json(response);
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.post("/applied/:id", async (req, res) => {
+	try {
+		let connection = await mongodb.connect(URL, {
+			useUnifiedTopology: true,
+		});
+		let db = connection.db(DB);
+		await db
+			.collection("applied")
+			.updateOne(
+				{ userID: req.body.userID },
+				{ $set: { applied: req.body.applied } }
+			);
+		await connection.close();
+		res.json({
+			message: "Application sent",
+		});
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.get("/applied/:id", async (req, res) => {
+	try {
+		let connection = await mongodb.connect(URL, {
+			useUnifiedTopology: true,
+		});
+		let db = connection.db(DB);
+		let response = await db
+			.collection("applied")
+			.findOne({ userID: req.params.id });
 		await connection.close();
 		res.json(response);
 	} catch (error) {
