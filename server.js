@@ -25,7 +25,7 @@ app.post("/register", async (req, res) => {
 		let salt = await bcrypt.genSalt(10);
 		let hash = await bcrypt.hash(req.body.password, salt);
 		req.body.password = hash;
-		await db.collection("users").insertOne(req.body);
+		let response = await db.collection("users").insertOne(req.body);
 		await db
 			.collection("applied")
 			.insertOne({ userID: response.ops[0]._id.toString(), applied: [] });
